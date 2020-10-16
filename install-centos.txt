@@ -1,0 +1,84 @@
+#########################################
+####1.Installing runtime
+yum install -y yum-utils
+yum-config-manager   --add-repo    https://download.docker.com/linux/centos/docker-ce.repo
+yum install docker-ce docker-ce-cli containerd.io -y
+systemctl start docker && systemctl enable docker
+docker version
+
+
+#########################################
+####2. Installing kubeadm
+# Swap disabled. You MUST disable 
+swapoff -a && sed -i '/swap/s/^/#/' /etc/fstab
+
+# Letting iptables see bridged traffic 
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sudo sysctl --system
+
+# Disable firewall
+systemctl stop firewalld 
+systemctl disable firewalld
+
+# Installing kubeadm, kubelet and kubectl
+cat <<EOF |  tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kubelet kubeadm kubectl
+EOF
+yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+systemctl enable kubelet && systemctl start kubelet
+
+
+# Set SELinux in permissive mode (effectively disabling it)
+setenforce 0
+sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+
+#########################################
+####3. Install a single control-plane Kubernetes cluster
+
+# 어떤 CNI?
+# Create a single-host Kubernetes cluster
+# kubeadm init --pod-network-cidr=192.168.0.0/16
+# Install Calico
+# kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+
+# initialize the control-plane
+kubeadm init 
+
+# kubectl 명령을 쓸수 있도록 허용. master root# kubectl command  ** node1/guru 
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+## node1의 guru 사용자가 kubectl 명령을 사용할수 있도록 허용
+mkdir -p ~guru/.kube
+scp   master:/etc/kubernetes/admin.conf   ~guru/.kube/config
+chown guru:guru ~guru/.kube/config
+
+실습
+node1의 root 사용자가 k8s 관리자가 되도록 구성하시오.
+
+
+## token 별도로 저장
+
+#CNI - weave
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+kubectl get nodes
+
+## worker nodes
+kubeadm join 10.100.0.104:6443 --token bjre7f.fq81xu5e5foczarl \
+     --discovery-token-ca-cert-hash sha256:5cc162b036e1adb0352246259e4358396520828f66e3a1aef0f67c98cb7fa25c 
+
+=============
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
