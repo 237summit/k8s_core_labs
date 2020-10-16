@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: appjs
+spec:
+  clusterIP: None
+  selector:
+    app: hpe
+  ports:
+  - port: 80
+    targetPort: 8080

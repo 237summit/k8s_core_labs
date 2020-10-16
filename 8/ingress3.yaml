@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: marvel-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: marvel-service
+          servicePort: 80
+      - path: /app
+        backend:
+          serviceName: appjs-service
+          servicePort: 80

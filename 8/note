@@ -1,0 +1,33 @@
+metadata:
+  name: marvel-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+ ----
+ 
+ 
+인증서 기능 추가 설정
+# openssl genrsa -out tls.key 2048
+# openssl req -new -x509 -key tls.key -out tls.crt -days 365 -subj /CN=node2.example.com
+
+secret
+# kubectl create secret tls tls-secret --cert=tls.crt --key=tls.key
+
+ingress3.yaml
+=======
+..
+metadata:
+  name: marvel-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+
+spec:
+  tls:
+  - hosts:
+    secretName: tls-secret
+ 
+ 
+    

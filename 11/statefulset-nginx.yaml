@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sf-nginx
+spec:
+  replicas: 3
+  serviceName: sf-nginx-svc
+  selector:
+    matchLabels:
+      app: webui
+  template:
+    metadata:
+      name: nginx-pod
+      labels:
+        app: webui
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx:1.14
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sf-nginx-svc
+spec:
+#  clusterIP: None
+  selector:
+    app: hpe
+  ports:
+  - port: 80
+    targetPort: 80
+

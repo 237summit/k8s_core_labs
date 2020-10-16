@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multipod
+spec:
+  containers:
+
+#first pod
+  - name: nginx-container
+    image: nginx:1.14
+    ports:
+    - containerPort: 80
+
+#second pod
+  - name: centos-container
+    image: centos:7
+    command: ["/bin/sh", "-c", "while : ;do curl http://localhost:80/; sleep 3; done"]

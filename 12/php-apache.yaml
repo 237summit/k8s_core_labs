@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-apache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hpe
+  template:
+    metadata:
+      labels:
+        app: hpe
+    spec:
+      containers:
+      - image: smlinux/hpa-example
+        name: c1
+        ports:
+        - containerPort: 80
+        resources: 
+          requests: 
+            cpu: 200m  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-apache
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: hpe

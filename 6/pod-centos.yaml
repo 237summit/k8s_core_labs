@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    tier: front-end 
+  name: centos-pod
+spec:
+  containers:
+  - name: centos-container
+    image: centos:7
+    args:
+    - /bin/sh
+    - -c
+    - sleep 5000 

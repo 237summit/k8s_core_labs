@@ -1,0 +1,19 @@
+# cronjob.yaml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: centos-cronjob
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: centos-container
+            image: centos:7
+            command: ["bash"]
+            args:
+            - "-c"
+            - "echo 'Hello World'; sleep 5; echo 'Bye'"
+          restartPolicy: Never

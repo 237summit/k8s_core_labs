@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: appjs
+spec:
+  selector:
+    matchLabels:
+      app: store
+  serviceName: appjs
+
+  replicas: 2
+
+  template:
+    metadata:
+      labels:
+        app: store
+    spec:
+      containers:
+      - image: smlinux/app-store
+        name: appjs
+        ports:
+        - containerPort: 8080
+
+        volumeMounts:
+        - name: data
+          mountPath: /var/data
+
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      storageClassName: nfs-storageclass 
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Mi

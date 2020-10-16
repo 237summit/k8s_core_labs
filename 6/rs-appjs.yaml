@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: rs-appjs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: appjs
+  template:
+    metadata:
+      labels:
+        app: appjs
+    spec:
+      containers:
+      - name: appjs-container
+        image: smlinux/appjs
+        ports:
+        - containerPort: 8080

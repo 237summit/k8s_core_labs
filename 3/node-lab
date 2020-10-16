@@ -1,0 +1,66 @@
+작업3: Kubernetes 노드관리
+노드 비우기
+1. 먼저 rs-appjs.yaml을 실행하여 포드 3개가 각 노드에서 실행되도록 구성한다.
+# kubectl create -f rs-appjs.yaml
+# kubectl get pods
+
+
+2. 멤버 노드 중 하나를 drain 시키기 전에 먼저 dry-run을 실행해 보자
+T1# watch kubectl get pods -o wide
+T2# kubectl drain nodeX.example.com --dry-run 
+
+
+3. Demonset 관리 포드도 drain 시키자.
+# kubectl drain nodeX.example.com --ignore-daemonsets 
+
+
+4. 해당 노드에 독립 포드가 존재한다면 --force 옵션을 구성한다.
+$ kubectl drain nodeX.example.com --force 
+
+
+5. 노드의 정보를 살펴보자.
+# Kubectl get nodes 
+
+
+6. 해당 노드를 다시 정상적으로 스케줄링 가능하게 되돌리자.
+# kubectl uncordon nodeX.example.com 
+
+
+7. 다시 노드의 정보를 살펴보자.
+# Kubectl get nodes 
+
+노드 중단
+8. 포드가 할당된 멤버 노드가 더 이상 스케줄링 되지 않도록 하자. 먼저 포드가 할당된 멤버 노드를 확인한다. 포드가 할당된 노드가 더 이상 스케줄링 되지 않도록 하자.
+# kubectl cordon nodeX.example.com 
+
+9. 노드의 상태를 확인한다. 다시 해당 노드를 정상적으로 스케줄링 될 수 있도록 한다.
+# kubectl uncordon nodeX.example.com
+
+노드 제거
+10. kubectl drain 명령은 nodeX.example.com을 제거한다.
+# kubectl drain nodeX.example.com --ignore-daemonsets 
+# kubectl delete node nodeX.example.com 
+
+11. 노드의 정보를 살펴보자.
+# Kubectl get nodes 
+  해당 노드가 목록에 더 이상 존재하지 않는 것을 확인할 수 있다.
+
+12. kubeadm으로 설치한 모든 상태를 reset한다. 
+NODEX# kubeadm reset 
+
+13. 마스터 노드에서 노드 조인을 위한 토큰을 생성한다.
+M# kubeadm token list
+
+token을 삭제할때는 아래의 명령을 사용한다.
+M# kubeadm token delete <삭제할 토큰>
+
+새로운 token을 생성한다.
+M# kubeadm token create 
+M# kubeadm token list
+
+14. 제거된 노드에서 새로 생성된 토큰을 사용하여 다시 멤버로 조인해보자.
+NODEX# kubeadm join 10.100.0.104:6443 --token <토큰> --discovery-token-unsafe-skip-ca-verification 
+NODEX# Kubectl get nodes 
+--discovery-token-unsafe-skip-ca-verification 옵션은 인증서를 생략할 때 사용한다. 인증서까지 넣고자 한다면 master 시스템에 저장해둔 token.txt를 참조하면된다.
+M# kubeadm join 10.100.0.104:6443 --token 2q9raz.xkeiew2uvllvc438 \
+    --discovery-token-ca-cert-hash sha256:75df2bb101bf1940a85...........8b

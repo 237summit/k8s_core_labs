@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nginx-rs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+    matchExpressions:
+      - {key: version, operator: In, values: ["1.14", "1.15"]}
+  template:
+    metadata:
+      name: nginx-pod
+      labels:
+        app: web
+        version: "1.14"
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx:1.14
+        ports:
+        - containerPort: 80

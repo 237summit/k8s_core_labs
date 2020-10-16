@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: appjs-rc
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: hpe
+    spec:
+      containers:
+      - image: smlinux/appjs
+        name: testcon
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appjs-service
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: hpe

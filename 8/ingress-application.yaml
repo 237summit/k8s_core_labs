@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marvel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: marvel
+  template:
+    metadata:
+      labels:
+        name: marvel
+    spec:
+      containers:
+      - image: smlinux/marvel
+        name: marvel-container
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: marvel-service
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    name: marvel
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: thor
+  template:
+    metadata:
+      labels:
+        name: thor
+    spec:
+      containers:
+      - image: smlinux/thor
+        name: thor-continaer
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thor-service
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: thor
+
