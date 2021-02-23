@@ -1,0 +1,86 @@
+kubectl 명령을 통해 nginx : 1.14를 동작시켜보자.
+컨테이너화된 애플리케이션을 쿠버네티스에서 동작하려면 미리 준비된 YAML 파일이나 kubectl run/create와 같은 CLI 명령을 통해 실행할 수 있다.
+
+
+1. kubectl run 명령을 이용해  웹서버 컨테이너(nginx:1.14) 실행하
+$ kubectl run pod-exam --image=nginx:1.14
+$ kubectl get pods
+
+
+2. deployment API를 이용해 nginx:1.14 컨테이너를 실행
+CLI 로 실행
+# kubectl create deployment demo --image=nginx:1.14 --replicas=2
+
+실행결과 보기
+# kubectl get deployment
+# kubectl get deployment.apps demo -o yaml
+
+yaml 파일 생성하기
+# kubectl get deployment.apps demo -o yaml > demo-deployment.yaml
+# cat demo-deployment.yaml
+
+scale 명령으로 pod 수 조절하기
+# kubectl scale deployment demo --replicas=5
+
+edit 명령으로 pod수 조절하기
+# kubectl edit deployment demo
+...
+  replicas=2
+
+# kubectl get deployment demo
+
+자세한 정보보기
+# kubectl get all
+# kubectl describe deployment demo
+
+제거하기
+# kubectl delete deployments.apps demo-deployment
+
+
+3. 앞서 만들어 둔 yaml 파일을 통해 deployment 실행하기
+# kubectl create -f demo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  labels:
+    app: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-c
+        image: nginx:1.14
+
+# kubectl create -f demo-deployment.yaml
+# kubectl get pods
+# kubectl get replicaset
+# kubectl get deployment
+
+
+4. 단축명령 사용확인
+# kubectl api-resources 
+# kubectl get pod
+# kubectl get rs
+# kubectl get deploy
+
+
+5. 실시간 pod 동작 상태 모니터링
+T1# watch kubectl get pod
+
+# kubectl delete rs demo-6d8dbd56d7
+# kubectl delete deploy demo
+
+
+6. kubectl 명령어 도움말 보기
+# kubectl -h 
+# kubectl get -h 
+# kubectl run -h 
+# kubectl create deployment --help
