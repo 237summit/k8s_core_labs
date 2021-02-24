@@ -17,7 +17,10 @@ selector: app: hellojs
 service port: 80
 targetport: 80
 nodePort: 30600
+
 구성 후에는 외부 접속 가능한지 확인하시오
+$ curl node1.example.com:30600
+
 
 
 4. 다음의 조건으로 Deployment을 사용하는 deploy-hellojs.yaml 파일을 생성 후 동작시키시오.
@@ -27,9 +30,12 @@ container : smlinux/hellojs:latest
 labels: app: hellojs
 
 
-5. 다음의 조건으로 dep-hellojs에 대한 서비스(NodePort) 를 운영하시오.
+5. 다음의 조건으로 dep-hellojs에 대한 서비스(NodePort) 를 운영하는 svc-hellojs.yaml 을 작성하고, 구동하시오.
 service name : svc-hellojs
 selector: app: hellojs
 service port: 80
 targetport: 8080
 nodePort: 30500
+
+6. 최종테스트
+http
