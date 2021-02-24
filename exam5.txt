@@ -12,8 +12,8 @@ labels: app: webui
 
 
 3. 다음의 조건으로 web-ui를 서비스하는 svc-ui.yaml 파일을 생성하시오..
-service name : svc-hellojs
-selector: app: hellojs
+service name : svc-ui
+selector: app: webui
 service port: 80
 targetport: 80
 nodePort: 30600
