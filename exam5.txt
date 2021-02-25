@@ -38,4 +38,4 @@ targetport: 8080
 nodePort: 30600
 
 6. 최종테스트
-http
+http://node2.example.com:30500
