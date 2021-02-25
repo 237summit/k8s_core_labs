@@ -16,7 +16,7 @@ service name : svc-ui
 selector: app: webui
 service port: 80
 targetport: 80
-nodePort: 30600
+nodePort: 30500
 
 구성 후에는 외부 접속 가능한지 확인하시오
 $ curl node1.example.com:30600
@@ -35,7 +35,7 @@ service name : svc-hellojs
 selector: app: hellojs
 service port: 80
 targetport: 8080
-nodePort: 30500
+nodePort: 30600
 
 6. 최종테스트
 http
