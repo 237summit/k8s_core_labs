@@ -19,7 +19,7 @@ targetport: 80
 nodePort: 30500
 
 구성 후에는 외부 접속 가능한지 확인하시오
-$ curl node1.example.com:30600
+$ curl node1.example.com:30500
 
 
 
