@@ -1,0 +1,23 @@
+1. 다음 조건에 맞는 PVC를 구성하시오.
+  - name : web-pvc
+  - resource storage: 10Gi
+  - accessModes: ReadOnlyMany
+
+
+2. 앞에서 생성한 PVC를 사용하는 웹서비스 Deployment를 생성하시오.
+  - name: nginx
+  - replicas: 3
+  - container image : nginx:1.14
+  - volume name : documentroot
+  - web-pvc 사용하여 /usr/share/nginx/html에 readonly 마운트
+
+
+3. 실행한 nginx pod들을 아래 조건에 맞는 Service를 통해 네트워크 구성하시오.
+  - service name: webserver
+  - service port: 80
+  - pod port:80
+  - nodeport : 30100
+
+
+4. NFS 서버의 공유 디렉토리 공간을 찾아서 현재 "hello, world"가 저장된 index.html 문서를 저장하고 웹페이지 테스트를 통해 서비스가 정상적으로 운영되는지 확인하시오. 
+웹페이지는 NodePort를 통해 확인하시오.
