@@ -64,5 +64,35 @@ barT/ # curl localhost:8001/api/v1/namespaces/foo/services
   barT/ # curl localhost:8001/api/v1/namespaces/foo/services
 
 
+===========================
+# kubectl get pv
 
+
+# kubectl create clusterrole pv-reader --verb=get,list --resource=persistentvolumes
+# kubectl get clusterrole pv-reader
+NAME        AGE
+pv-reader   22s
+
+# kubectl get clusterrole pv-reader -o yaml
+...
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+
+
+2. 클러스터 수준 리소스에 대한 접근을 부여하려면 항상 클러스터 롤바인딩을 사용해야한다.
+foo 사용자에게 클러스터 롤바인딩을 생성하자
+# kubectl create clusterrolebinding pv-test --clusterrole=pv-reader --serviceaccount=foo:default
+# kubectl get clusterrolebindings pv-test
+NAME      ROLE                    AGE
+pv-test   ClusterRole/pv-reader   4m28s
+
+
+3. Persistentvolume을 나열해보자.
+fooT/# curl localhost:8001/api/v1/persistentvolumes
 
