@@ -1,0 +1,68 @@
+role-rolebinding
+1. 환경구성및 pod account 권한보기
+kubectl create ns foo
+kubectl create ns bar
+kubectl get namespaces
+
+kubectl run test --image=smlinux/kubectl-proxy -n foo
+kubectl run test --image=smlinux/kubectl-proxy -n bar
+
+
+T2# kubectl exec -it test -n foo -- sh
+fooT/#
+
+T3# kubectl exec -it test -n bar -- sh
+barT/#
+
+RBAC가 활성화 되었어도 포드가 클러스터 상태를 읽지 못함을 확인해보자. curl을 이용해 foo 네임스페이스의 서비스를 나열해보자
+fooT/# curl localhost:8001/api/v1/namespaces/foo/services
+...
+  "message": "services is forbidden: User \"system:serviceaccount:foo:default\" cannot list resource \"services\" in API group \"\" in the namespace \"foo\"",
+...
+  "code": 403
+
+
+2. role
+# cat service-reader.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: foo           	## role은 foo 네임스페이스에 적용 된다. 
+  name: service-reader
+rules:
+- apiGroups: [""]           
+  verbs: ["get", "list"]       
+  resources: ["services"]     	## role 은 service에서 get, list를 허용한다.
+ 
+
+# kubectl create -f service-reader.yaml -n foo
+# kubectl get role -n foo
+
+
+# kubectl create role service-reader --verb=get --verb=list --resource=services -n bar
+# kubectl get role -n bar
+
+
+3. rolebinding
+
+# kubectl create rolebinding test --role=service-reader --serviceaccount=foo:default -n foo
+# kubectl get rolebindings test -n foo -o yaml
+# kubectl create -f svc-appjs.yaml -n foo
+
+TEST
+fooT/# curl localhost:8001/api/v1/namespaces/foo/services
+barT/ # curl localhost:8001/api/v1/namespaces/foo/services
+
+4. 롤 바인딩에서 다른 네임스페이스(bar)의 서비스어카운트 포함하기
+# kubectl edit rolebindings test -n foo
+...
+- kind: ServiceAccount			## bar namespace내의 pod에서 foo의 서비스조회
+  name: default
+  namespace: bar
+  
+  
+  barT/ # curl localhost:8001/api/v1/namespaces/foo/services
+
+
+
+
