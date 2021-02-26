@@ -1,3 +1,49 @@
 helm install mysql  --set mysqlRootPassword=pass,mysqlUser=mysql,mysqlPassword=work,mysqlDatabase=mydatabase,persistence.existingClaim=mysql-pvc  stable/mysql
 
 MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace default mysql -o jsonpath="{.data.mysql-root-password}" | base64 --decode; echo)
+
+
+example: Installing Prometheus 
+
+검색 
+$ helm search repo stable 
+$ helm search repo prometheus
+
+
+monitor라는 이름으로 prometheus 설치
+$ helm install monitor stable/prometheus
+설치성공? 실패이면 왜 인지 확인 -- persistentVolume
+$ kubectl get pod
+세부 정보로 확인
+$ helm inspect values stable/prometheus
+
+commandline을 통해 변경사항 넣어서 upgrade 가능하나 지금은 파일을 통해 진행해본다.
+$  vim volumeF.yaml
+alertmanager:
+    persistentVolume:
+        enabled: false
+server:  
+    persistentVolume:
+        enabled: false
+pushgateway: 
+    persistentVolume:
+        enabled: false
+
+upgrade 진행
+$ helm upgrade -f volumeF.yaml monitor stable/prometheus
+
+
+설치상태확인
+$ kubectl get all
+
+프로메테우스 접속 가능하도록 NodePort 열기
+$ kubectl edit svc monitor-prometheus-server  --> NodePort로 변경
+
+이후 웹브라우저로 실행해봄
+$ kubectl get svc
+웹브라우저로 : http://nodeX.example.com:30XXX
+
+
+필요시 정보 보고
+삭제하기
+$ kubectl uninstall monitor
