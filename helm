@@ -1,0 +1,3 @@
+helm install mysql  --set mysqlRootPassword=pass,mysqlUser=mysql,mysqlPassword=work,mysqlDatabase=mydatabase,persistence.existingClaim=mysql-pvc  stable/mysql
+
+MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace default mysql -o jsonpath="{.data.mysql-root-password}" | base64 --decode; echo)
