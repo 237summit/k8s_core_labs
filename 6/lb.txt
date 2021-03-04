@@ -1,28 +1,28 @@
-# vim /etc/yum.repos.d/nginx.repo
+vim /etc/yum.repos.d/nginx.repo
 [nginx]
 name=nginx repo
 baseurl=http://nginx.org/packages/centos/7/$basearch/
 gpgcheck=0
 enabled=1
 
-# yum install -y nginx
+yum install -y nginx
 
 
 2. service 데몬을 한다. 
-# systemctl start nginx && systemctl enable nginx
-# systemctl status nginx
+systemctl start nginx && systemctl enable nginx
+systemctl status nginx
 
 
 3. station 시스템에 방화벽이 운영중이라면 아래와 같이 방화벽을 해제하고 또한 SELinux 설정도 해야한다.
-# firewall-cmd --add-service=http
-# firewall-cmd --add-service=http --permanent
+firewall-cmd --add-service=http
+firewall-cmd --add-service=http --permanent
 
-# setsebool -P httpd_can_network_connect 1
+setsebool -P httpd_can_network_connect 1
 
 
 4. LoadBalancer 운영을 위해 nginx 설정파일을 다음과 같이 수정한다.
-# cat > /etc/nginx/conf.d/default.conf
-# Load Balancing
+cat > /etc/nginx/conf.d/default.conf
+#Load Balancing
 upstream backend {
   ip_hash;
   server 10.100.0.101:30123 max_fails=3 fail_timeout=10s;
@@ -44,5 +44,5 @@ server {
 }
 
 환경설정 파일을 수정한 후에는 서비스 데몬을 다시 실행해준다.
-# systemctl restart nginx
+systemctl restart nginx
 
