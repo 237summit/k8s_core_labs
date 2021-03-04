@@ -4,7 +4,8 @@ name=nginx repo
 baseurl=http://nginx.org/packages/centos/7/$basearch/
 gpgcheck=0
 enabled=1
-# yum install –y nginx
+
+# yum install -y nginx
 
 
 2. service 데몬을 한다. 
