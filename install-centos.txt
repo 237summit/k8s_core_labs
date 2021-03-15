@@ -13,7 +13,7 @@ cat << END  > /etc/docker/daemon.json
  },
  "storage-driver": "overlay2"
 }
-EOF
+END
 systemctl daemon-reload
 systemctl restart docker
 docker version
