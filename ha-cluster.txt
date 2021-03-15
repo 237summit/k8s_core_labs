@@ -7,7 +7,13 @@ yum install docker-ce docker-ce-cli containerd.io -y
 systemctl start docker && systemctl enable docker
 cat << END > /etc/docker/daemon.json
 {
-  "insecure-registries": ["10.100.0.0/24"]
+  "insecure-registries": ["10.100.0.0/24"],
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
 }
 systemctl restart docker 
 docker version
