@@ -1,0 +1,138 @@
+kubeadm을 이용해 single control-plane cluster 구축
+
+
+1. Before you begin
+A compatible Linux host. The Kubernetes project provides generic instructions for Linux distributions based on Debian and Red Hat, and those distributions without a package manager.
+2 GB or more of RAM per machine (any less will leave little room for your apps).
+2 CPUs or more.
+Full network connectivity between all machines in the cluster (public or private network is fine).
+Unique hostname, MAC address, and product_uuid for every node. See here for more details.
+Certain ports are open on your machines. See here for more details.
+Swap disabled. You MUST disable swap in order for the kubelet to work properly.
+
+# Disable firewall
+systemctl stop firewalld 
+systemctl disable firewalld
+
+# Swap disabled. You MUST disable 
+swapoff -a && sed -i '/swap/s/^/#/' /etc/fstab
+
+
+2. Letting iptables see bridged traffic 
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sudo sysctl --system
+
+
+3. Installing runtime
+파드가 노드에서 실행될 수 있도록 클러스터의 각 노드에 컨테이너 런타임을 설치해야 한다. 
+기본적으로, 쿠버네티스는 컨테이너 런타임 인터페이스(CRI)를 사용하여 사용자가 선택한 컨테이너 런타임과 인터페이스한다.
+kubelet은 빌트인 dockershim CRI 구현을 통해 도커와 통합된다.
+
+# Runtime	  Path to Unix domain socket
+# Docker	  /var/run/dockershim.sock
+# containerd	  /run/containerd/containerd.sock
+# CRI-O	  /var/run/crio/crio.sock
+
+#docker install link: https://docs.docker.com/engine/install/centos/
+yum install -y yum-utils
+yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+
+yum install docker-ce docker-ce-cli containerd.io -y
+
+systemctl enable --now docker
+docker version
+
+
+# 컨테이너의 cgroup 관리에 systemd를 사용하도록 Docker 데몬을 구성
+mkdir /etc/docker
+cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+
+systemctl enable docker
+systemctl daemon-reload
+systemctl restart docker
+
+
+4. Installing kubeadm, kubelet and kubectl
+
+# Installing kubeadm, kubelet and kubectl
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kubelet kubeadm kubectl
+EOF
+
+# Set SELinux in permissive mode (effectively disabling it)
+setenforce 0
+sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+
+sudo systemctl enable --now kubelet
+
+
+5. Install a single control-plane Kubernetes cluster
+# 어떤 CNI?
+# Create a single-host Kubernetes cluster
+# kubeadm init --pod-network-cidr=192.168.0.0/16
+# Install Calico
+# kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+
+# initialize the control-plane
+kubeadm init 
+
+
+# kubectl 명령을 쓸 수 있도록 허용
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+## token 별도로 저장
+cat > token.txt
+kubeadm init 명령 시 출력된 토큰을 저장해서 이후에 worker node들이 join할 때 사용
+
+
+Installing a Pod network add-on
+#CNI - weave
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+kubectl get nodes
+
+
+6. Worker Nodes Join
+## worker nodes
+kubeadm join 10.100.0.104:6443 --token bxxxxxxxxxxxxxxxxxxx \
+     --discovery-token-ca-cert-hash sha256:5cc1xxxxxxxxxxxxxxxxxxx
+
+
+7. kubectl command 자동완성 기능 추가
+yum install -y  bash-completion
+source /usr/share/bash-completion/bash_completion
+
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
+
+
+8. 설치확인
+kubectl get nodes
+kubectl get nodes -o wide
+kubectl describe node node1.example.com
+kubectl get pod --all-namespaces
+
