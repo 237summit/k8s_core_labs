@@ -1,0 +1,140 @@
+클라우드 가상머신에 k8s 설치
+
+
+1. 가상머신 생성
+서울 리전
+AMI: Amazon Linux 2 AMI(HVM), SSD Volume Type
+Instance Type : t2.mdium(cpu 2, memory 4GiB)
+Numer of instances: 3
+
+Network: Default VPC
+Subnet: ap-northeast-2a
+
+Tag : Name=btc-ap2-k8s
+
+Storage : 20Gi SSD
+
+Security Group:
+ name: sg_k8s_all
+ Description : Open full traffic for k8s service
+ [Add Rule]
+Type : All traffic 
+Protocol: All
+Port Range: 0-65535
+Source : Custom 172.31.0.0/16(default VPC)
+Description : Open All traffic for k8s
+Login Key pair 선택 및 생성
+
+
+2. Instances 이름 변경
+Name: btc-ap2-k8s-master
+Name: btc-ap2-k8s-node1
+Name: btc-ap2-k8s-node2
+
+
+3. Elastic IP 설정 - btc-ap2-k8s-master, btc-ap2-k8s-node1, btc-ap2-k8s-node2
+
+
+4. Remote Login(ec2-user) 후 hostname 변경 : master, node2, node3
+$ sudo -i
+
+# hostnamectl set-hostname master
+
+# hostname
+master
+
+* node1, node2도 동일하게 호스트 이름 변경
+
+
+5. 표준 시간대 변경
+https://docs.aws.amazon.com/ko_kr/AWSEC2/latest/UserGuide/set-time.html
+date
+cat /etc/localtime
+TZif2UTCTZif2 
+UTC0
+
+rm /etc/localtime
+
+ln -s /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+date
+
+* node1, node2도 동일하게 표준 시간대 변경
+
+
+6. vi 에디터 기본 구성
+cat > .vimrc
+set paste
+
+
+7. kubeadm 설치 및 k8s 구성
+docker 설치
+# Letting iptables see bridged traffic 
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sudo sysctl --system
+
+
+#docker install 
+yum update -y
+yum install docker -y
+
+cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+systemctl enable --now docker && sudo systemctl status docker
+docker version
+
+
+kubeadm 설치
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kubelet kubeadm kubectl
+EOF
+
+# Set SELinux in permissive mode (effectively disabling it)
+setenforce 0
+sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+
+systemctl enable --now kubelet
+
+
+control-plane 구성 : kubeadm init
+# initialize the control-plane
+kubeadm init 
+
+CNI - Weave 설치
+#CNI - weave
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+kubectl get nodes
+
+
+Worker-Node Join
+kubeadm join 172.XX.X.XXX:6443 --token bxxxxxxxxxxxxxxxxxxx \
+     --discovery-token-ca-cert-hash sha256:5cc1xxxxxxxxxxxxxxxxxxx
+
+
+kubectl command 자동완성 기능 추가
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
+
+
+8. 설치확인
+kubectl get nodes
+kubectl get nodes -o wide
