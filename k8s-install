@@ -1,9 +1,9 @@
-cre-docker 설치 메뉴얼
-설치
 wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.2.5/cri-dockerd-0.2.5.amd64.tgz
-tar -xf cri-dockerd-0.2.5.amd64.tgz
+
+tar -xf cri-dockerd-0.2.5.amd64.tgz 
 cp cri-dockerd/cri-dockerd /usr/bin/
 chmod +x /usr/bin/cri-dockerd
+
 # systemctl 데몬 시작파일 구성
 cat <<"EOF" > /usr/lib/systemd/system/cri-docker.service
 [Unit]
@@ -12,36 +12,54 @@ Documentation=https://docs.mirantis.com
 After=network-online.target firewalld.service docker.service
 Wants=network-online.target
 Requires=cri-docker.socket
+
 [Service]
 Type=notify
-ExecStart=/usr/bin/cri-dockerd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause
+
+ExecStart=/usr/bin/cri-dockerd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.7
+
 ExecReload=/bin/kill -s HUP $MAINPID
 TimeoutSec=0
 RestartSec=2
 Restart=always
+
 StartLimitBurst=3
+
 StartLimitInterval=60s
+
 LimitNOFILE=infinity
 LimitNPROC=infinity
 LimitCORE=infinity
+
 TasksMax=infinity
 Delegate=yes
 KillMode=process
+
 [Install]
 WantedBy=multi-user.target
+
 EOF
+
 # socket 파일 생성
 cat <<"EOF" > /usr/lib/systemd/system/cri-docker.socket
 [Unit]
 Description=CRI Docker Socket for the API
 PartOf=cri-docker.service
+
 [Socket]
 ListenStream=%t/cri-dockerd.sock
 SocketMode=0660
 SocketUser=root
 SocketGroup=docker
+
 [Install]
 WantedBy=sockets.target
+
 EOF
+
 #cri-docker 시작
 systemctl daemon-reload
+systemctl enable --now cri-docker
+systemctl status cri-docker
+...
+<CTRL>+<c>
