@@ -130,6 +130,10 @@ NAME                 STATUS   ROLES           AGE   VERSION
 master.example.com   Ready    control-plane   15m   v1.24.3
 
 
+# workernode join
+kubeadm join 10.0.2.50:6443 --token 2whv...bbib --discovery-token-ca-cert-hash sha256:712538d8a5a...6a5078570b57 --cri-socket unix:///var/run/cri-dockerd.sock
+
+
 
 apt-get install bash-completion -y
 source <(kubectl completion bash) # setup autocomplete in bash into the current shell, bash-completion package should be installed first.
