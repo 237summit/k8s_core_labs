@@ -63,3 +63,84 @@ systemctl enable --now cri-docker
 systemctl status cri-docker
 ...
 <CTRL>+<c>
+
+
+- ****Installing kubeadm, kubelet and kubectl****
+# Update the apt package index and install packages needed to use the Kubernetes apt repository:
+apt-get update
+apt-get install -y apt-transport-https ca-certificates curl
+
+# Download the Google Cloud public signing key:
+curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+# Add the Kubernetes apt repository:
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# Update apt package index, install kubelet, kubeadm and kubectl, and pin their version:
+apt-get update
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
+
+
+Initializing your control-plane node
+# control-plaine 컴포넌트 구성
+kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket unix:///var/run/cri-dockerd.sock
+...
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes control-plane has initialized successfully!
+
+
+# Kubectl을 명령 실행 허용하려면 kubeadm init 명령의 실행결과 나온 내용을 동작해야 함
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+# root 권한으로 worker node join을 위한 명령어. 별도 저장해둠.
+cat > token.join
+kubeadm join 10.0.2.50:6443 --token 2whvdj...qbbib \
+	--discovery-token-ca-cert-hash sha256:7125...78570b57
+<CTRL>+<d>
+
+Installing a Pod network add-on
+# CNI(컨테이너 네트워크 인터페이스) 기반 Pod 네트워크 추가 기능을 배포해야 Pod가 서로 통신할 수 있습니다. 네트워크를 설치하기 전에 클러스터 DNS(CoreDNS)가 시작되지 않습니다.
+kubectl get nodes
+NAME       STATUS     ROLES           AGE     VERSION
+master     NotReady   control-plane   7m31s   v1.24.3
+
+# Pod 네트워크가 호스트 네트워크와 겹치지 않도록 주의해야함. 
+# Calico 설치
+kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
+kubectl create -f https://projectcalico.docs.tigera.io/manifests/custom-resources.yaml
+
+# node 초기화 될때까지 기다림
+watch kubectl get pods -n calico-system
+
+kubectl get pods -n calico-system
+NAME                                      READY   STATUS    RESTARTS   AGE
+calico-kube-controllers-657d56796-nrxbx   0/1     Pending   0          75s
+calico-node-w2n8f                         1/1     Running   0          75s
+calico-typha-5d9f7ffbf4-mx846             1/1     Running   0          75s
+
+
+# 다시 확인
+kubectl get nodes
+NAME                 STATUS   ROLES           AGE   VERSION
+master.example.com   Ready    control-plane   15m   v1.24.3
+
+
+
+apt-get install bash-completion -y
+source <(kubectl completion bash) # setup autocomplete in bash into the current shell, bash-completion package should be installed first.
+echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permanently to your bash shell.
+
+
+mkdir -p ~user/.kube
+cp -i /etc/kubernetes/admin.conf ~user/.kube/config
+chown user:user ~user/.kube/config
+    ```
+    
+    
+    
+    
