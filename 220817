@@ -40,3 +40,5 @@ kubectl delete deployment webserver
 kubectl delete service webserver
 
 
+kubectl apply -f webserver.yaml
+kubectl get deployment,service             # kubectl get all
