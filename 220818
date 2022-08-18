@@ -1,0 +1,28 @@
+cat > web1.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webserver
+  namespace: samsung-ds
+  labels:
+    app: nginx
+    tier: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      nodeLabel:
+        disktype: ssd
+      containers:
+      - name: nginx
+        image: public.ecr.aws/docker/library/httpd:alpine3.16
+        ports:
+        - containerPort: 80
+
+kubectl apply -f web1.yaml
