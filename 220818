@@ -17,7 +17,7 @@ spec:
       labels:
         app: nginx
     spec:
-      nodeLabel:
+      nodeSelector:
         disktype: ssd
       containers:
       - name: nginx
